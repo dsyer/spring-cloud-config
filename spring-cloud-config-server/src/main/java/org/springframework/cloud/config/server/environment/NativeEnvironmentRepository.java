@@ -16,7 +16,8 @@
 
 package org.springframework.cloud.config.server.environment;
 
-import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -186,9 +187,13 @@ public class NativeEnvironmentRepository
 				boolean matches = false;
 				String normal = name;
 				if (normal.startsWith("file:")) {
-					normal = StringUtils
-							.cleanPath(new File(normal.substring("file:".length()))
-									.getAbsolutePath());
+					try {
+						normal = StringUtils
+								.cleanPath(new URI(normal).toString().substring("file:".length()));
+					}
+					catch (URISyntaxException e) {
+						throw new IllegalStateException("Unexpected bad URI: " + normal);
+					}
 				}
 				String profile = result.getProfiles() == null ? null
 						: StringUtils.arrayToCommaDelimitedString(result.getProfiles());
@@ -198,10 +203,13 @@ public class NativeEnvironmentRepository
 						pattern = "file:" + pattern;
 					}
 					if (pattern.startsWith("file:")) {
-						pattern = StringUtils
-								.cleanPath(new File(pattern.substring("file:".length()))
-										.getAbsolutePath())
-								+ "/";
+						try {
+							pattern = StringUtils
+									.cleanPath(new URI(pattern).toString().substring("file:".length()));
+						}
+						catch (URISyntaxException e) {
+							throw new IllegalStateException("Unexpected bad URI: " + pattern);
+						}
 					}
 					if (logger.isTraceEnabled()) {
 						logger.trace("Testing pattern: " + pattern
